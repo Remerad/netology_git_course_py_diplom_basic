@@ -52,6 +52,7 @@ def save_photos_from_list():
                 handle.write(block)
 
 
+
 if __name__ == '__main__':
     get_photo_urls_list()
     pprint(photo_list)

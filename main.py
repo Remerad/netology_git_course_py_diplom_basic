@@ -4,7 +4,6 @@ import requests
 from datetime import date
 from pprint import pprint
 
-#TODO: отправка данных на яндекс-диск
 #TODO: ввод входных данных пользователем
 #TODO: запись json файла с параметрами фото
 #TODO: прогресс-бар и логирование
@@ -12,7 +11,6 @@ from pprint import pprint
 
 token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
 photo_list = []
-YA_API_BASE_URL = "https://cloud-api.yandex.net/v1/disk"
 ya_token = ''
 
 
@@ -56,12 +54,13 @@ def save_photos_from_list():
 
     for photo in photo_list:
         if likes.count(photo['likes']) == 1:
-            name = str(photo['likes'])
+            name = str(photo['likes']) + '.jpg'
         else:
-            name = str(photo['likes']) + '_' + str(photo['date'])
+            name = str(photo['likes']) + '_' + str(photo['date']) + '.jpg'
         photo.update({'name': name})
+        #pprint(photo)
 
-        with open(name + '.jpg', 'wb') as handle:
+        with open(name, 'wb') as handle:
             response = requests.get(photo['url'], stream=True)
             if not response.ok:
                 print(response)
@@ -75,29 +74,30 @@ def save_photos_from_list():
 
 
 def upload(self):
-    file_path = "1.jpg"
-
-    headers = {
-        "Accept": "application/json",
-        "Authorization": "OAuth " + ya_token
-    }
-    params = {
-        'path': file_path,
-        'overwrite': True
-    }
-    response = requests.get(YA_API_BASE_URL + "/resources/upload", params=params, headers=headers)
-    pprint(response.json())
-    upload_response = requests.put(url=response.json()['href'], data=open(file_path, 'rb'),
-                                   params=params, headers=headers)
-    print(upload_response.status_code)
+    YA_API_BASE_URL = "https://cloud-api.yandex.net/v1/disk/resources/upload"
+    for photo in photo_list:
+        file_path = photo['name']
+        headers = {
+            "Accept": "application/json",
+            "Authorization": "OAuth " + ya_token
+        }
+        params = {
+            'path': 'ntl_dipl_folder/' + file_path,
+            'overwrite': True
+        }
+        response = requests.get(YA_API_BASE_URL, params=params, headers=headers)
+        pprint(response.json())
+        upload_response = requests.put(url=response.json()['href'], data=open(file_path, 'rb'),
+                                       params=params, headers=headers)
+        print(upload_response.status_code)
 
 
 if __name__ == '__main__':
     path_to_file = '1.jpg'
 
     get_photo_urls_list()
-    pprint(photo_list)
+
     #prepare_photos_names()
     save_photos_from_list()
-    #result = upload(path_to_file)
     pprint(photo_list)
+    upload(path_to_file)

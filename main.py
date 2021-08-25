@@ -27,20 +27,27 @@ def get_photo_urls_list():
         photo_list.append({'likes': photos_data['likes']['count'],
                            'date': photos_data['date'], 'url': max_size_url}) #date.fromtimestamp(photos_data['date'])
 
-def prepare_photos_hames():
+
+def prepare_photos_names():
+    likes = []
     for photo in photo_list:
-        print(photo['likes'])
+        likes.append(photo['likes'])
+    for photo in photo_list:
+        print(photo['likes']," / ", likes.count(photo['likes']))
 
 
 def save_photos_from_list():
     likes = []
     name = ''
     for photo in photo_list:
-        if photo['likes'] not in likes:
+        likes.append(photo['likes'])
+    print(likes)
+
+    for photo in photo_list:
+        if likes.count(photo['likes']) == 1:
             name = str(photo['likes'])
-            likes.append(photo['likes'])
         else:
-            name = str(photo['likes'] + photo['date'])
+            name = str(photo['likes']) + '_' + str(photo['date'])
 
         with open(name + '.jpg', 'wb') as handle:
             response = requests.get(photo['url'], stream=True)
@@ -56,4 +63,5 @@ def save_photos_from_list():
 if __name__ == '__main__':
     get_photo_urls_list()
     pprint(photo_list)
-    prepare_photos_hames()
+    #prepare_photos_names()
+    save_photos_from_list()

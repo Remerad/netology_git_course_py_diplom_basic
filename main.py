@@ -3,15 +3,17 @@ import json
 import requests
 from datetime import date
 from pprint import pprint
-
+import time
+from progress.bar import IncrementalBar
+import os
 #TODO: ввод входных данных пользователем
 #TODO: запись json файла с параметрами фото
-#TODO: прогресс-бар и логирование
+#TODO: логирование
 
 
-token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
+VK_token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
 photo_list = []
-ya_token = ''
+ya_token = 'AQAAAAATlnZQAADLWzsN6RsA1ULxqW-SC8hLnak'
 
 
 def get_photo_urls_list():
@@ -19,7 +21,7 @@ def get_photo_urls_list():
     params = {
         'owner_ids': 'begemot_korovin',
         'album_id': 'profile',
-        'access_token': token,
+        'access_token': VK_token,
         'extended': 1,
         'v': '5.77'
     }
@@ -35,14 +37,7 @@ def get_photo_urls_list():
         #print(max_size, ' - ', max_size_url)
         photo_list.append({'likes': photos_data['likes']['count'],
                            'date': photos_data['date'], 'url': max_size_url}) #date.fromtimestamp(photos_data['date'])
-
-
-def prepare_photos_names():
-    likes = []
-    for photo in photo_list:
-        likes.append(photo['likes'])
-    for photo in photo_list:
-        print(photo['likes'], " / ", likes.count(photo['likes']))
+    print(f'Всего фото в профиле: {len(photo_list)}')
 
 
 def save_photos_from_list():
@@ -50,7 +45,9 @@ def save_photos_from_list():
     name = ''
     for photo in photo_list:
         likes.append(photo['likes'])
-    print(likes)
+    #print(likes)
+
+    bar = IncrementalBar('Сохранение фото:', max=len(photo_list))
 
     for photo in photo_list:
         if likes.count(photo['likes']) == 1:
@@ -69,12 +66,16 @@ def save_photos_from_list():
                     break
                 handle.write(block)
 
+        bar.next()
         with open('photos_data.json', 'w') as handle:
             (json.dump(likes, handle))
+    bar.finish()
 
 
-def upload(self):
+
+def upload():
     YA_API_BASE_URL = "https://cloud-api.yandex.net/v1/disk/resources/upload"
+    bar = IncrementalBar('Загрузка фото на ЯДиск фото:', max=len(photo_list))
     for photo in photo_list:
         file_path = photo['name']
         headers = {
@@ -86,18 +87,32 @@ def upload(self):
             'overwrite': True
         }
         response = requests.get(YA_API_BASE_URL, params=params, headers=headers)
-        pprint(response.json())
+        #pprint(response.json())
         upload_response = requests.put(url=response.json()['href'], data=open(file_path, 'rb'),
                                        params=params, headers=headers)
-        print(upload_response.status_code)
+        #print(upload_response.status_code)
+        bar.next()
+    bar.finish()
+
+def folder_maker():
+    folder_name = 'ntl_dipl_folder'
+    YA_API_BASE_URL = "https://cloud-api.yandex.net/v1/disk/resources"
+    headers = {
+        "Accept": "application/json",
+        "Authorization": "OAuth " + ya_token
+    }
+    params = {
+        'path':  '/'+folder_name #
+    }
+    response = requests.put(YA_API_BASE_URL, params=params, headers=headers)
+    #pprint(response.json())
 
 
 if __name__ == '__main__':
-    path_to_file = '1.jpg'
-
     get_photo_urls_list()
-
-    #prepare_photos_names()
+    #pprint(photo_list)
     save_photos_from_list()
-    pprint(photo_list)
-    upload(path_to_file)
+    #pprint(photo_list)
+    folder_maker()
+    upload()
+    os.system('pause')

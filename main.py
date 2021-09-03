@@ -6,20 +6,22 @@ from pprint import pprint
 import time
 from progress.bar import IncrementalBar
 import os
-#TODO: ввод входных данных пользователем
-#TODO: запись json файла с параметрами фото
-#TODO: логирование
 
+#TODO: запись json файла с параметрами фото
+
+import main
 
 VK_token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
 photo_list = []
-ya_token = 'AQAAAAATlnZQAADLWzsN6RsA1ULxqW-SC8hLnak'
+ya_token = ''
+photos_owner_id = 'begemot_korovin'
 
 
 def get_photo_urls_list():
+    photos_owner_id = input("Введите id пользователя: ")
     URL = 'https://api.vk.com/method/photos.get'
     params = {
-        'owner_ids': 'begemot_korovin',
+        'owner_ids': photos_owner_id,
         'album_id': 'profile',
         'access_token': VK_token,
         'extended': 1,
@@ -72,7 +74,6 @@ def save_photos_from_list():
     bar.finish()
 
 
-
 def upload():
     YA_API_BASE_URL = "https://cloud-api.yandex.net/v1/disk/resources/upload"
     bar = IncrementalBar('Загрузка фото на ЯДиск фото:', max=len(photo_list))
@@ -94,6 +95,7 @@ def upload():
         bar.next()
     bar.finish()
 
+
 def folder_maker():
     folder_name = 'ntl_dipl_folder'
     YA_API_BASE_URL = "https://cloud-api.yandex.net/v1/disk/resources"
@@ -105,14 +107,17 @@ def folder_maker():
         'path':  '/'+folder_name #
     }
     response = requests.put(YA_API_BASE_URL, params=params, headers=headers)
-    #pprint(response.json())
+    pprint(response.json())
 
 
 if __name__ == '__main__':
     get_photo_urls_list()
-    #pprint(photo_list)
-    save_photos_from_list()
-    #pprint(photo_list)
+    ##pprint(photo_list)
+    #save_photos_from_list()
+    ##begemot-korovin
+    ya_token = input("Введите токен Яндекс-Диска: ")
+    print(ya_token)
     folder_maker()
     upload()
+    pprint(photo_list)
     os.system('pause')

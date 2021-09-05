@@ -7,9 +7,9 @@ import time
 from progress.bar import IncrementalBar
 import os
 
-#TODO: запись json файла с параметрами фото
+#TODO: запись имен фото с датами в человекочитаемом виде
 
-import main
+
 
 VK_token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
 photo_list = []
@@ -28,6 +28,7 @@ def get_photo_urls_list():
         'v': '5.77'
     }
     res = requests.get(URL, params=params)
+    #pprint(res.json())
     for photos_data in (res.json()['response']['items']):
         max_size = 0
         max_size_url = ''
@@ -36,9 +37,12 @@ def get_photo_urls_list():
             if photo_size['height'] > max_size:
                max_size = photo_size['height']
                max_size_url = photo_size['url']
+               max_size_type = photo_size['type']
         #print(max_size, ' - ', max_size_url)
         photo_list.append({'likes': photos_data['likes']['count'],
-                           'date': photos_data['date'], 'url': max_size_url}) #date.fromtimestamp(photos_data['date'])
+                           'date': photos_data['date'],
+                           'url': max_size_url,
+                           'size': max_size_type})
     print(f'Всего фото в профиле: {len(photo_list)}')
 
 
@@ -74,6 +78,20 @@ def save_photos_from_list():
     bar.finish()
 
 
+def folder_maker():
+    folder_name = 'ntl_dipl_folder'
+    YA_API_BASE_URL = "https://cloud-api.yandex.net/v1/disk/resources"
+    headers = {
+        "Accept": "application/json",
+        "Authorization": "OAuth " + ya_token
+    }
+    params = {
+        'path':  '/'+folder_name
+    }
+    response = requests.put(YA_API_BASE_URL, params=params, headers=headers)
+    pprint(response.json())
+
+
 def upload():
     YA_API_BASE_URL = "https://cloud-api.yandex.net/v1/disk/resources/upload"
     bar = IncrementalBar('Загрузка фото на ЯДиск фото:', max=len(photo_list))
@@ -96,28 +114,25 @@ def upload():
     bar.finish()
 
 
-def folder_maker():
-    folder_name = 'ntl_dipl_folder'
-    YA_API_BASE_URL = "https://cloud-api.yandex.net/v1/disk/resources"
-    headers = {
-        "Accept": "application/json",
-        "Authorization": "OAuth " + ya_token
-    }
-    params = {
-        'path':  '/'+folder_name #
-    }
-    response = requests.put(YA_API_BASE_URL, params=params, headers=headers)
-    pprint(response.json())
+def make_json_file():
+    for photo in photo_list:
+        photo.pop('date')
+        photo.pop('likes')
+        photo.pop('url')
+    with open('photos_data.json', 'w') as f:
+        json.dump(photo_list, f, sort_keys=True)
 
 
 if __name__ == '__main__':
     get_photo_urls_list()
     ##pprint(photo_list)
-    #save_photos_from_list()
+    save_photos_from_list()
     ##begemot-korovin
     ya_token = input("Введите токен Яндекс-Диска: ")
     print(ya_token)
     folder_maker()
     upload()
+    pprint(photo_list)
+    make_json_file()
     pprint(photo_list)
     os.system('pause')

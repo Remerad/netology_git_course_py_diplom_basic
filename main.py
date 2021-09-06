@@ -1,20 +1,13 @@
 import json
-
 import requests
-from datetime import date
+from datetime import datetime
 from pprint import pprint
-import time
 from progress.bar import IncrementalBar
-import os
-
-#TODO: запись имен фото с датами в человекочитаемом виде
-
-
 
 VK_token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
 photo_list = []
 ya_token = ''
-photos_owner_id = 'begemot_korovin'
+photos_owner_id = ''
 
 
 def get_photo_urls_list():
@@ -59,7 +52,8 @@ def save_photos_from_list():
         if likes.count(photo['likes']) == 1:
             name = str(photo['likes']) + '.jpg'
         else:
-            name = str(photo['likes']) + '_' + str(photo['date']) + '.jpg'
+            dt = datetime.fromtimestamp(photo['date'])
+            name = f"{photo['likes']}_{dt.year}_{dt.month}_{dt.day}_{dt.hour}_{dt.minute}_{dt.second}.jpg"
         photo.update({'name': name})
         #pprint(photo)
 
@@ -128,11 +122,12 @@ if __name__ == '__main__':
     ##pprint(photo_list)
     save_photos_from_list()
     ##begemot-korovin
-    ya_token = input("Введите токен Яндекс-Диска: ")
-    print(ya_token)
-    folder_maker()
-    upload()
-    pprint(photo_list)
+    #ya_token = input("Введите токен Яндекс-Диска: ")
+    #print(ya_token)
+    #folder_maker()
+    #upload()
+    #pprint(photo_list)
     make_json_file()
-    pprint(photo_list)
-    os.system('pause')
+    #pprint(photo_list)
+    #os.system('pause')
+

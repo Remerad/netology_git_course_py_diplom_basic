@@ -1,13 +1,12 @@
 import json
 import requests
 from datetime import datetime
-from pprint import pprint
+import os
 from progress.bar import IncrementalBar
 
 VK_token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
 photo_list = []
 ya_token = ''
-photos_owner_id = ''
 
 
 def get_photo_urls_list():
@@ -21,33 +20,27 @@ def get_photo_urls_list():
         'v': '5.77'
     }
     res = requests.get(URL, params=params)
-    #pprint(res.json())
     for photos_data in (res.json()['response']['items']):
         max_size = 0
         max_size_url = ''
         for photo_size in photos_data['sizes']:
-            #pprint(photo_size['height'])
             if photo_size['height'] > max_size:
                max_size = photo_size['height']
                max_size_url = photo_size['url']
                max_size_type = photo_size['type']
-        #print(max_size, ' - ', max_size_url)
         photo_list.append({'likes': photos_data['likes']['count'],
                            'date': photos_data['date'],
                            'url': max_size_url,
-                           'size': max_size_type})
+                           'size': max_size_type}
+                          )
     print(f'Всего фото в профиле: {len(photo_list)}')
 
 
 def save_photos_from_list():
     likes = []
-    name = ''
     for photo in photo_list:
         likes.append(photo['likes'])
-    #print(likes)
-
     bar = IncrementalBar('Сохранение фото:', max=len(photo_list))
-
     for photo in photo_list:
         if likes.count(photo['likes']) == 1:
             name = str(photo['likes']) + '.jpg'
@@ -55,8 +48,6 @@ def save_photos_from_list():
             dt = datetime.fromtimestamp(photo['date'])
             name = f"{photo['likes']}_{dt.year}_{dt.month}_{dt.day}_{dt.hour}_{dt.minute}_{dt.second}.jpg"
         photo.update({'name': name})
-        #pprint(photo)
-
         with open(name, 'wb') as handle:
             response = requests.get(photo['url'], stream=True)
             if not response.ok:
@@ -65,7 +56,6 @@ def save_photos_from_list():
                 if not block:
                     break
                 handle.write(block)
-
         bar.next()
         with open('photos_data.json', 'w') as handle:
             (json.dump(likes, handle))
@@ -83,7 +73,6 @@ def folder_maker():
         'path':  '/'+folder_name
     }
     response = requests.put(YA_API_BASE_URL, params=params, headers=headers)
-    pprint(response.json())
 
 
 def upload():
@@ -100,10 +89,8 @@ def upload():
             'overwrite': True
         }
         response = requests.get(YA_API_BASE_URL, params=params, headers=headers)
-        #pprint(response.json())
         upload_response = requests.put(url=response.json()['href'], data=open(file_path, 'rb'),
                                        params=params, headers=headers)
-        #print(upload_response.status_code)
         bar.next()
     bar.finish()
 
@@ -119,15 +106,10 @@ def make_json_file():
 
 if __name__ == '__main__':
     get_photo_urls_list()
-    ##pprint(photo_list)
     save_photos_from_list()
-    ##begemot-korovin
-    #ya_token = input("Введите токен Яндекс-Диска: ")
-    #print(ya_token)
-    #folder_maker()
-    #upload()
-    #pprint(photo_list)
+    ya_token = input("Введите токен Яндекс-Диска: ")
+    folder_maker()
+    upload()
     make_json_file()
-    #pprint(photo_list)
-    #os.system('pause')
+    os.system('pause')
 
